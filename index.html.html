@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Element Detective</title>
+  <style>
+    :root{--navy:#12233f;--red:#ba2738;--gold:#f4b942;--paper:#f7f4ee;--ink:#172033;--muted:#667085;--line:#d7dce5;--green:#16845b}
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(145deg,#f4f6fb,#fffaf0);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+    button,input{font:inherit}.top{background:var(--navy);color:white;padding:18px 24px;border-bottom:6px solid var(--red)}
+    .top-inner{max-width:1500px;margin:auto;display:flex;gap:20px;align-items:center;justify-content:space-between}.brand h1{margin:0;font-size:clamp(1.6rem,3vw,2.5rem);letter-spacing:.02em}.brand p{margin:4px 0 0;color:#dce6fa}
+    .round{display:flex;gap:9px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.pill{background:#ffffff18;border:1px solid #ffffff44;border-radius:999px;padding:8px 13px;font-weight:700}.new{background:var(--gold);color:#241a03;border:0;border-radius:10px;padding:11px 17px;font-weight:900;cursor:pointer;box-shadow:0 3px 0 #b77d0c}.new:active{transform:translateY(2px);box-shadow:0 1px 0 #b77d0c}
+    main{max-width:1500px;margin:18px auto;padding:0 18px;display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 7px 22px #24345014}.table-card{padding:17px;overflow:auto}.section-title{margin:0 0 3px;font-size:1.12rem}.helper{margin:0 0 14px;color:var(--muted);font-size:.92rem}
+    .ptable{min-width:990px;display:grid;grid-template-columns:repeat(18,minmax(46px,1fr));grid-auto-rows:59px;gap:4px}.element{position:relative;border:2px solid #fff;border-radius:7px;padding:4px;cursor:pointer;box-shadow:0 0 0 1px #aeb7c7;transition:.13s;text-align:left;color:#101828}.element:hover{transform:translateY(-2px);z-index:2;box-shadow:0 4px 9px #21304d33}.element .n{font-size:9px;line-height:1}.element .s{display:block;text-align:center;font-weight:900;font-size:18px;line-height:20px}.element .nm{display:block;text-align:center;font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.element.eliminated{filter:grayscale(1);opacity:.27}.element.eliminated:after{content:"×";position:absolute;inset:-7px;display:grid;place-items:center;color:#7d1725;font-size:51px;font-weight:500;line-height:1}.element.answer{outline:4px solid var(--green);outline-offset:1px;opacity:1;filter:none}.element.wrong{animation:shake .28s ease}.placeholder{border:1px dashed #a9b3c5;border-radius:7px;display:grid;place-items:center;font-size:11px;color:#536079;background:#f8fafc;cursor:default;padding:3px;text-align:center}
+    .metal,.metalloid,.nonmetal{background:#e8edf5}.board-note{margin-top:13px;font-size:.82rem;color:#667085}
+    aside{display:flex;flex-direction:column;gap:14px}.side-card{padding:17px}.clue-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.clue-btn{border:1px solid #c8d0dd;border-radius:10px;background:#f7f9fc;padding:10px 7px;font-weight:800;color:#24334d;cursor:pointer;min-height:45px}.clue-btn:hover{background:#eaf0f9;border-color:#8798b4}.clue-btn:disabled{opacity:.48;cursor:default}.clue-log{margin-top:12px;display:flex;flex-direction:column;gap:8px;min-height:74px}.clue{border-left:5px solid var(--gold);background:#fff9e7;border-radius:6px;padding:9px 10px;font-size:.91rem}.clue b{color:#785000}.empty{color:var(--muted);font-style:italic;font-size:.9rem;padding:10px 0}
+    .guess-row{display:flex;gap:8px}.guess-row input{min-width:0;flex:1;border:2px solid #bcc6d6;border-radius:10px;padding:11px}.guess-row input:focus{outline:3px solid #f4b94255;border-color:#d7960d}.guess-row button{border:0;border-radius:10px;background:var(--red);color:white;padding:10px 14px;font-weight:900;cursor:pointer}.message{margin-top:10px;border-radius:9px;padding:10px;display:none;font-weight:750}.message.show{display:block}.message.good{background:#def6ea;color:#096242}.message.bad{background:#fde5e8;color:#8b1f2e}.scoreline{font-size:.86rem;color:var(--muted);margin-top:10px}.directions ol{padding-left:20px;margin:9px 0 0}.directions li{margin:7px 0;font-size:.91rem}
+    @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+    @media(max-width:1030px){main{grid-template-columns:1fr}aside{display:grid;grid-template-columns:1fr 1fr}.directions{grid-column:1/-1}}
+    @media(max-width:650px){.top-inner{align-items:flex-start;flex-direction:column}.round{justify-content:flex-start}.table-card{padding:10px}main{padding:0 9px}.side-card{padding:14px}aside{display:flex}.clue-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-inner"><div class="brand"><h1>ELEMENT DETECTIVE</h1><p>Use periodic-table clues to uncover the mystery element.</p></div><div class="round"><span class="pill" id="clueCount">Clues: 0</span><span class="pill" id="guessCount">Guesses: 0</span><button class="new" id="newRound">New Mystery Element</button></div></div></header>
+  <main>
+    <section class="card table-card"><h2 class="section-title">Your Elimination Board</h2><p class="helper">Click any element to cross it out. Click it again to bring it back.</p><div class="ptable" id="ptable"></div><div class="board-note">All tiles stay the same color so the Element Type clue is not given away.</div></section>
+    <aside>
+      <section class="card side-card"><h2 class="section-title">Request a Clue</h2><p class="helper">Choose clues strategically. Each clue can be used once.</p><div class="clue-grid" id="clueButtons"></div><div class="clue-log" id="clueLog"><div class="empty">Your revealed clues will appear here.</div></div></section>
+      <section class="card side-card"><h2 class="section-title">Make Your Guess</h2><p class="helper">Type the element name or symbol.</p><form class="guess-row" id="guessForm"><input id="guess" autocomplete="off" placeholder="Example: Chlorine or Cl" aria-label="Element guess"><button>Guess</button></form><div class="message" id="message"></div><div class="scoreline" id="scoreline">Solve it with the fewest clues and guesses you can!</div></section>
+      <section class="card side-card directions"><h2 class="section-title">How to Play</h2><ol><li>Click a clue button to learn one property.</li><li>Cross out elements that do not fit the clues.</li><li>Type the name or symbol when you think you know it.</li><li>Start a new round after solving the mystery.</li></ol></section>
+    </aside>
+  </main>
+<script>
+const raw=`1|H|Hydrogen|1|1|nonmetal
+2|He|Helium|18|1|nonmetal
+3|Li|Lithium|1|2|metal
+4|Be|Beryllium|2|2|metal
+5|B|Boron|13|2|metalloid
+6|C|Carbon|14|2|nonmetal
+7|N|Nitrogen|15|2|nonmetal
+8|O|Oxygen|16|2|nonmetal
+9|F|Fluorine|17|2|nonmetal
+10|Ne|Neon|18|2|nonmetal
+11|Na|Sodium|1|3|metal
+12|Mg|Magnesium|2|3|metal
+13|Al|Aluminum|13|3|metal
+14|Si|Silicon|14|3|metalloid
+15|P|Phosphorus|15|3|nonmetal
+16|S|Sulfur|16|3|nonmetal
+17|Cl|Chlorine|17|3|nonmetal
+18|Ar|Argon|18|3|nonmetal
+19|K|Potassium|1|4|metal
+20|Ca|Calcium|2|4|metal
+21|Sc|Scandium|3|4|metal
+22|Ti|Titanium|4|4|metal
+23|V|Vanadium|5|4|metal
+24|Cr|Chromium|6|4|metal
+25|Mn|Manganese|7|4|metal
+26|Fe|Iron|8|4|metal
+27|Co|Cobalt|9|4|metal
+28|Ni|Nickel|10|4|metal
+29|Cu|Copper|11|4|metal
+30|Zn|Zinc|12|4|metal
+31|Ga|Gallium|13|4|metal
+32|Ge|Germanium|14|4|metalloid
+33|As|Arsenic|15|4|metalloid
+34|Se|Selenium|16|4|nonmetal
+35|Br|Bromine|17|4|nonmetal
+36|Kr|Krypton|18|4|nonmetal
+37|Rb|Rubidium|1|5|metal
+38|Sr|Strontium|2|5|metal
+39|Y|Yttrium|3|5|metal
+40|Zr|Zirconium|4|5|metal
+41|Nb|Niobium|5|5|metal
+42|Mo|Molybdenum|6|5|metal
+43|Tc|Technetium|7|5|metal
+44|Ru|Ruthenium|8|5|metal
+45|Rh|Rhodium|9|5|metal
+46|Pd|Palladium|10|5|metal
+47|Ag|Silver|11|5|metal
+48|Cd|Cadmium|12|5|metal
+49|In|Indium|13|5|metal
+50|Sn|Tin|14|5|metal
+51|Sb|Antimony|15|5|metalloid
+52|Te|Tellurium|16|5|metalloid
+53|I|Iodine|17|5|nonmetal
+54|Xe|Xenon|18|5|nonmetal
+55|Cs|Cesium|1|6|metal
+56|Ba|Barium|2|6|metal
+57|La|Lanthanum|3|6|metal
+72|Hf|Hafnium|4|6|metal
+73|Ta|Tantalum|5|6|metal
+74|W|Tungsten|6|6|metal
+75|Re|Rhenium|7|6|metal
+76|Os|Osmium|8|6|metal
+77|Ir|Iridium|9|6|metal
+78|Pt|Platinum|10|6|metal
+79|Au|Gold|11|6|metal
+80|Hg|Mercury|12|6|metal
+81|Tl|Thallium|13|6|metal
+82|Pb|Lead|14|6|metal
+83|Bi|Bismuth|15|6|metal
+84|Po|Polonium|16|6|metalloid
+85|At|Astatine|17|6|metalloid
+86|Rn|Radon|18|6|nonmetal
+87|Fr|Francium|1|7|metal
+88|Ra|Radium|2|7|metal
+89|Ac|Actinium|3|7|metal
+104|Rf|Rutherfordium|4|7|metal
+105|Db|Dubnium|5|7|metal
+106|Sg|Seaborgium|6|7|metal
+107|Bh|Bohrium|7|7|metal
+108|Hs|Hassium|8|7|metal
+109|Mt|Meitnerium|9|7|metal
+110|Ds|Darmstadtium|10|7|metal
+111|Rg|Roentgenium|11|7|metal
+112|Cn|Copernicium|12|7|metal
+113|Nh|Nihonium|13|7|metal
+114|Fl|Flerovium|14|7|metal
+115|Mc|Moscovium|15|7|metal
+116|Lv|Livermorium|16|7|metal
+117|Ts|Tennessine|17|7|nonmetal
+118|Og|Oganesson|18|7|nonmetal
+58|Ce|Cerium|f|8|metal
+59|Pr|Praseodymium|f|8|metal
+60|Nd|Neodymium|f|8|metal
+61|Pm|Promethium|f|8|metal
+62|Sm|Samarium|f|8|metal
+63|Eu|Europium|f|8|metal
+64|Gd|Gadolinium|f|8|metal
+65|Tb|Terbium|f|8|metal
+66|Dy|Dysprosium|f|8|metal
+67|Ho|Holmium|f|8|metal
+68|Er|Erbium|f|8|metal
+69|Tm|Thulium|f|8|metal
+70|Yb|Ytterbium|f|8|metal
+71|Lu|Lutetium|f|8|metal
+90|Th|Thorium|f|9|metal
+91|Pa|Protactinium|f|9|metal
+92|U|Uranium|f|9|metal
+93|Np|Neptunium|f|9|metal
+94|Pu|Plutonium|f|9|metal
+95|Am|Americium|f|9|metal
+96|Cm|Curium|f|9|metal
+97|Bk|Berkelium|f|9|metal
+98|Cf|Californium|f|9|metal
+99|Es|Einsteinium|f|9|metal
+100|Fm|Fermium|f|9|metal
+101|Md|Mendelevium|f|9|metal
+102|No|Nobelium|f|9|metal
+103|Lr|Lawrencium|f|9|metal`;
+const elements=raw.trim().split('\n').map(x=>{const [n,s,name,g,p,type]=x.split('|');return {n:+n,s,name,g:g==='f'?'f':+g,p:+p,type}});
+const byN=Object.fromEntries(elements.map(e=>[e.n,e]));
+function family(e){if(e.s==='H')return 'Hydrogen (a unique nonmetal)';if(e.g===1)return 'Alkali metals';if(e.g===2)return 'Alkaline earth metals';if(e.g>=3&&e.g<=12)return 'Transition metals';if(e.g===13)return 'Boron family';if(e.g===14)return 'Carbon family';if(e.g===15)return 'Nitrogen family';if(e.g===16)return 'Oxygen family (chalcogens)';if(e.g===17)return 'Halogens';if(e.g===18)return 'Noble gases';if(e.n>=58&&e.n<=71)return 'Lanthanides';return 'Actinides'}
+function valence(e){
+  if(e.s==='He')return '2';
+  if(e.g===1)return '1';
+  if(e.g===2)return '2';
+  if(e.g>=13&&e.g<=18)return String(e.g-10);
+  return 'Cannot say for sure (transition metal)';
+}
+function ion(e){if(e.s==='H')return '+1 (sometimes −1)';if(e.g===1)return '+1';if(e.g===2)return '+2';if(e.g===13)return '+3';if(e.g===14)return '±4 (often shares electrons instead)';if(e.g===15)return '−3';if(e.g===16)return '−2';if(e.g===17)return '−1';if(e.g===18)return '0 — does not usually form an ion';return 'variable charge'}
+function reactivity(e){if(e.g===18)return 'not very reactive (very stable)';if(e.g===1&&e.s!=='H')return 'very reactive metal';if(e.g===2)return 'reactive metal';if(e.g===17)return 'very reactive nonmetal';if(e.g===16)return 'reactive nonmetal';if(e.s==='H')return 'reactive nonmetal';if(['Au','Pt','Pd','Ag'].includes(e.s))return 'not very reactive';return 'moderately reactive or varies by conditions'}
+const clues=[
+ ['Valence Electrons',e=>valence(e)==='Cannot say for sure (transition metal)'?valence(e):`${valence(e)} valence electron${valence(e)==='1'?'':'s'}`],
+ ['Element Type',e=>`It is a ${e.type}.`],
+ ['Reactivity',e=>`It is ${reactivity(e)}.`],
+ ['Period',e=>e.p<8?`It is in period ${e.p}.`:`It belongs in the ${e.n<=71?'lanthanide':'actinide'} row (period ${e.n<=71?6:7}).`],
+ ['Group #',e=>e.g==='f'?`It is in the f-block (no standard group number).`:`It is in group ${e.g}.`],
+ ['Family Name',e=>`Its family is: ${family(e)}.`],
+ ['Ion It Becomes',e=>`Its common classroom ion charge is ${ion(e)}.`]
+];
+let mystery,used=new Set(),guesses=0,solved=false;
+const table=document.getElementById('ptable'),log=document.getElementById('clueLog'),msg=document.getElementById('message');
+function tile(e,col,row){const b=document.createElement('button');b.type='button';b.className=`element ${e.type}`;b.dataset.n=e.n;b.style.gridColumn=col;b.style.gridRow=row;b.title=`${e.name} (${e.s})`;b.innerHTML=`<span class="n">${e.n}</span><span class="s">${e.s}</span><span class="nm">${e.name}</span>`;b.onclick=()=>{if(!solved)b.classList.toggle('eliminated')};table.appendChild(b)}
+function drawTable(){table.innerHTML='';elements.filter(e=>e.p<=7).forEach(e=>tile(e,e.g,e.p));const l=document.createElement('div');l.className='placeholder';l.style.gridColumn='3';l.style.gridRow='6';l.textContent='57–71';table.appendChild(l);const a=l.cloneNode();a.style.gridRow='7';a.textContent='89–103';table.appendChild(a);elements.filter(e=>e.p===8).forEach((e,i)=>tile(e,i+4,8));elements.filter(e=>e.p===9).forEach((e,i)=>tile(e,i+4,9))}
+function drawClues(){const box=document.getElementById('clueButtons');box.innerHTML='';clues.forEach(([label],i)=>{const b=document.createElement('button');b.type='button';b.className='clue-btn';b.textContent=label;b.dataset.i=i;b.onclick=()=>reveal(i);box.appendChild(b)})}
+function reveal(i){if(used.has(i)||solved)return;used.add(i);document.querySelector(`[data-i="${i}"]`).disabled=true;if(used.size===1)log.innerHTML='';const div=document.createElement('div');div.className='clue';div.innerHTML=`<b>${clues[i][0]}:</b> ${clues[i][1](mystery)}`;log.appendChild(div);document.getElementById('clueCount').textContent=`Clues: ${used.size}`}
+function normalize(x){return x.trim().toLowerCase().replace(/[^a-z]/g,'')}
+function submitGuess(e){e.preventDefault();if(solved)return;const input=document.getElementById('guess'),value=normalize(input.value);if(!value){show('Type an element name or symbol first.','bad');return}guesses++;document.getElementById('guessCount').textContent=`Guesses: ${guesses}`;if(value===normalize(mystery.name)||value===normalize(mystery.s)){solved=true;document.querySelector(`[data-n="${mystery.n}"]`).classList.remove('eliminated');document.querySelector(`[data-n="${mystery.n}"]`).classList.add('answer');show(`Correct! The mystery element is ${mystery.name} (${mystery.s}).`,'good');document.getElementById('scoreline').textContent=`Solved with ${used.size} clue${used.size===1?'':'s'} and ${guesses} guess${guesses===1?'':'es'}.`;document.querySelectorAll('.clue-btn').forEach(b=>b.disabled=true)}else{show(`${input.value.trim()} is not the mystery element yet. Keep eliminating!`,'bad');const match=elements.find(x=>normalize(x.name)===value||normalize(x.s)===value);if(match){const t=document.querySelector(`[data-n="${match.n}"]`);t.classList.remove('wrong');void t.offsetWidth;t.classList.add('wrong')}input.select()}}
+function show(text,type){msg.textContent=text;msg.className=`message show ${type}`}
+function newRound(){const playable=elements.filter(e=>e.n<=86);mystery=playable[Math.floor(Math.random()*playable.length)];used.clear();guesses=0;solved=false;document.querySelectorAll('.element').forEach(x=>x.classList.remove('eliminated','answer','wrong'));document.querySelectorAll('.clue-btn').forEach(x=>x.disabled=false);log.innerHTML='<div class="empty">Your revealed clues will appear here.</div>';msg.className='message';msg.textContent='';document.getElementById('guess').value='';document.getElementById('clueCount').textContent='Clues: 0';document.getElementById('guessCount').textContent='Guesses: 0';document.getElementById('scoreline').textContent='Solve it with the fewest clues and guesses you can!'}
+drawTable();drawClues();newRound();document.getElementById('guessForm').addEventListener('submit',submitGuess);document.getElementById('newRound').onclick=newRound;
+</script>
+</body>
+</html>
